@@ -57,6 +57,12 @@ class _PropertyDictWrapper(object):
   def __repr__(self):
     return repr(self._data)
 
+  def __iter__(self):
+    return iter(self._data)
+
+  def items(self):
+    return self._data.items()
+
   def get_all(self) -> Dict[Text, channel.Channel]:
     return self._data
 

@@ -98,6 +98,7 @@ class Driver(base_driver.BaseDriver):
       self,
       input_dict: Dict[Text, channel.Channel],
       exec_properties: Dict[Text, Any],
+      driver_args: data_types.DriverArgs,  # pylint: disable=unused-argument
       pipeline_info: data_types.PipelineInfo,
   ) -> Dict[Text, List[types.TfxArtifact]]:
     """Overrides BaseDriver.resolve_input_artifacts()."""

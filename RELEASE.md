@@ -18,6 +18,9 @@
 *   Introduced new mechanism of artifact info passing between component that
     solely rely on ML Metadata
 *   Driver and execution logging are now unified to go through tf.logging.
+*   Introduce the experimental InteractiveSession environment for iterative
+    notebook development, as well as an example Chicago Taxi notebook example
+    in this environment.
 
 ## Bug fixes and other changes
 *   Declared 'cmle_training_args' on trainer and 'cmle_serving_args' on

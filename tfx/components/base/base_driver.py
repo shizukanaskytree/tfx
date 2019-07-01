@@ -94,6 +94,7 @@ class BaseDriver(object):
       self,
       input_dict: Dict[Text, channel.Channel],
       exec_properties: Dict[Text, Any],  # pylint: disable=unused-argument
+      driver_args: data_types.DriverArgs,
       pipeline_info: data_types.PipelineInfo,
   ) -> Dict[Text, List[types.TfxArtifact]]:
     """Resolve input artifacts from metadata.
@@ -107,6 +108,8 @@ class BaseDriver(object):
       input_dict: key -> Channel mapping for inputs generated in logical
         pipeline.
       exec_properties: Dict of other execution properties, e.g., configs.
+      driver_args: An instance of data_types.DriverArgs with driver
+        configuration properties.
       pipeline_info: An instance of data_types.PipelineInfo, holding pipeline
         related properties including component_type and component_id.
 
@@ -120,6 +123,9 @@ class BaseDriver(object):
     result = {}
     for name, input_channel in input_dict.items():
       artifacts = list(input_channel.get())
+      if driver_args.interactive_artifact_resolution:
+        result[name] = artifacts
+        continue
       # TODO(ruoyu): Remove once channel-based input resolution is supported.
       if not artifacts:
         raise RuntimeError('Channel-based input resolution is not supported.')
@@ -211,7 +217,7 @@ class BaseDriver(object):
 
     # Step 1. Fetch inputs from metadata.
     input_artifacts = self.resolve_input_artifacts(input_dict, exec_properties,
-                                                   pipeline_info)
+                                                   driver_args, pipeline_info)
     _verify_input_artifacts(artifacts_dict=input_artifacts)
     tf.logging.info('Resolved input artifacts are: %s' % input_artifacts)
     # Step 2. Register execution in metadata.

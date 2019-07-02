@@ -64,7 +64,6 @@ class BaseHandler(with_metaclass(abc.ABCMeta, object)):
 
   def _check_pipeline_dsl_path(self) -> None:
     """Check if pipeline dsl path exists."""
-    # Check if dsl exists.
     if not tf.io.gfile.exists(self.flags_dict[labels.PIPELINE_DSL_PATH]):
       sys.exit('Invalid pipeline path: {}'
                .format(self.flags_dict[labels.PIPELINE_DSL_PATH]))

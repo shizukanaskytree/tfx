@@ -40,13 +40,15 @@ class TestQueryBasedExampleGenComponent(component._QueryBasedExampleGen):
   def __init__(self,
                input_config,
                output_config=None,
-               name=None,
-               example_artifacts=None):
+               example_artifacts=None,
+               database_config=None,
+               name=None):
     super(TestQueryBasedExampleGenComponent, self).__init__(
         input_config=input_config,
         output_config=output_config,
         component_name='TestQueryBasedExampleGenComponent',
         example_artifacts=example_artifacts,
+        database_config=database_config,
         name=name)
 
 
@@ -58,8 +60,8 @@ class TestFileBasedExampleGenComponent(component.FileBasedExampleGen):
                input_base,
                input_config=None,
                output_config=None,
-               name=None,
-               example_artifacts=None):
+               example_artifacts=None,
+               name=None):
     super(TestFileBasedExampleGenComponent, self).__init__(
         input_base=input_base,
         input_config=input_config,
@@ -71,13 +73,40 @@ class TestFileBasedExampleGenComponent(component.FileBasedExampleGen):
 
 class ComponentTest(tf.test.TestCase):
 
-  def test_construct_subclass_query_based(self):
+  def test_construct_subclass_query_based_unconfigured(self):
     example_gen = TestQueryBasedExampleGenComponent(
         input_config=example_gen_pb2.Input(splits=[
             example_gen_pb2.Input.Split(name='single', pattern='query'),
         ]))
     self.assertEqual({}, example_gen.inputs.get_all())
     self.assertEqual(base_driver.BaseDriver, example_gen.driver_class)
+    self.assertEqual(None, example_gen.exec_properties.get('database_config'))
+
+    self.assertEqual('ExamplesPath', example_gen.outputs.examples.type_name)
+    artifact_collection = example_gen.outputs.examples.get()
+    self.assertEqual('train', artifact_collection[0].split)
+    self.assertEqual('eval', artifact_collection[1].split)
+
+  def test_construct_subclass_query_based_configured(self):
+    database_config = {
+        'host': 'localhost',
+        'port': 8000,
+        'auth': {
+            'user': 'root',
+            'password': 12345
+        }
+    }
+    example_gen = TestQueryBasedExampleGenComponent(
+        input_config=example_gen_pb2.Input(splits=[
+            example_gen_pb2.Input.Split(name='single', pattern='query'),
+        ]),
+        database_config=database_config,
+    )
+    self.assertEqual({}, example_gen.inputs.get_all())
+    self.assertEqual(base_driver.BaseDriver, example_gen.driver_class)
+    self.assertEqual(database_config,
+                     example_gen.exec_properties.get('database_config'))
+
     self.assertEqual('ExamplesPath', example_gen.outputs.examples.type_name)
     artifact_collection = example_gen.outputs.examples.get()
     self.assertEqual('train', artifact_collection[0].split)

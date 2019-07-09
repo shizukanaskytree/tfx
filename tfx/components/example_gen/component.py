@@ -17,10 +17,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from typing import Optional
-from typing import Text
-from typing import Type
-
+from typing import Any, Dict, Optional, Text, Type
 from tfx.components.base import base_component
 from tfx.components.base import base_executor
 from tfx.components.base.base_component import ChannelParameter
@@ -39,6 +36,7 @@ class QueryBasedExampleGenSpec(base_component.ComponentSpec):
   PARAMETERS = {
       'input_config': ExecutionParameter(type=example_gen_pb2.Input),
       'output_config': ExecutionParameter(type=example_gen_pb2.Output),
+      'database_config': ExecutionParameter(type=dict, optional=True),
   }
   INPUTS = {}
   OUTPUTS = {
@@ -66,7 +64,7 @@ class _QueryBasedExampleGen(base_component.BaseComponent):
   """TFX query-based ExampleGen component base class.
 
   ExampleGen component takes input data source, and generates train
-  and eval example splits (or custom splits) for downsteam components.
+  and eval example splits (or custom splits) for downstream components.
   """
 
   SPEC_CLASS = QueryBasedExampleGenSpec
@@ -78,6 +76,7 @@ class _QueryBasedExampleGen(base_component.BaseComponent):
                output_config: Optional[example_gen_pb2.Output] = None,
                component_name: Optional[Text] = 'ExampleGen',
                example_artifacts: Optional[channel.Channel] = None,
+               database_config: Optional[Dict[Text, Any]] = None,
                name: Optional[Text] = None):
     """Construct an QueryBasedExampleGen component.
 
@@ -91,19 +90,23 @@ class _QueryBasedExampleGen(base_component.BaseComponent):
         class. Default to 'ExampleGen', can be overwritten by sub-classes.
       example_artifacts: Optional channel of 'ExamplesPath' for output train and
         eval examples.
+      database_config: Optional configuration for connecting to database. Must
+        be serializable.
       name: Unique name for every component class instance.
     """
     # Configure outputs.
     output_config = output_config or utils.make_default_output_config(
         input_config)
-    example_artifacts = example_artifacts or channel.as_channel(
-        [types.TfxArtifact('ExamplesPath', split=split_name)
-         for split_name in utils.generate_output_split_names(
-             input_config, output_config)])
+    example_artifacts = example_artifacts or channel.as_channel([
+        types.TfxArtifact('ExamplesPath', split=split_name)
+        for split_name in utils.generate_output_split_names(
+            input_config, output_config)
+    ])
     spec = QueryBasedExampleGenSpec(
         component_name=component_name,
         input_config=input_config,
         output_config=output_config,
+        database_config=database_config,
         examples=example_artifacts)
     super(_QueryBasedExampleGen, self).__init__(spec=spec, name=name)
 
@@ -152,10 +155,11 @@ class FileBasedExampleGen(base_component.BaseComponent):
     input_config = input_config or utils.make_default_input_config()
     output_config = output_config or utils.make_default_output_config(
         input_config)
-    example_artifacts = example_artifacts or channel.as_channel(
-        [types.TfxArtifact('ExamplesPath', split=split_name)
-         for split_name in utils.generate_output_split_names(
-             input_config, output_config)])
+    example_artifacts = example_artifacts or channel.as_channel([
+        types.TfxArtifact('ExamplesPath', split=split_name)
+        for split_name in utils.generate_output_split_names(
+            input_config, output_config)
+    ])
     spec = FileBasedExampleGenSpec(
         component_name=component_name,
         input_base=input_base,

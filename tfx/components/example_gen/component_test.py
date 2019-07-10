@@ -40,8 +40,8 @@ class TestQueryBasedExampleGenComponent(component._QueryBasedExampleGen):
   def __init__(self,
                input_config,
                output_config=None,
-               name=None,
-               example_artifacts=None):
+               example_artifacts=None,
+               name=None):
     super(TestQueryBasedExampleGenComponent, self).__init__(
         input_config=input_config,
         output_config=output_config,
@@ -58,8 +58,8 @@ class TestFileBasedExampleGenComponent(component.FileBasedExampleGen):
                input_base,
                input_config=None,
                output_config=None,
-               name=None,
-               example_artifacts=None):
+               example_artifacts=None,
+               name=None):
     super(TestFileBasedExampleGenComponent, self).__init__(
         input_base=input_base,
         input_config=input_config,

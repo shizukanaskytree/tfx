@@ -17,9 +17,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-# Standard Imports
-
 import tensorflow as tf
+from google.protobuf import any_pb2
 from tfx.components.example_gen import utils
 from tfx.proto import example_gen_pb2
 
@@ -103,6 +102,25 @@ class UtilsTest(tf.test.TestCase):
           }
         }
         """, example)
+
+  def test_make_default_input_config_without_custom(self):
+    input_config = utils.make_default_input_config('query1')
+    self.assertEqual(1, len(input_config.splits))
+    self.assertEqual(False, input_config.HasField('custom_config'))
+
+  def test_make_default_input_config_with_custom(self):
+    custom_config = example_gen_pb2.Input.Split(name='config', pattern='test')
+    packed_custom_config = any_pb2.Any()
+    packed_custom_config.Pack(custom_config)
+
+    input_config = utils.make_default_input_config(
+        split_pattern='query1', custom_config=packed_custom_config)
+    self.assertEqual(1, len(input_config.splits))
+
+    # Unpack custom_config
+    unpacked_custom_config = example_gen_pb2.Input.Split()
+    input_config.custom_config.Unpack(unpacked_custom_config)
+    self.assertEqual(custom_config, unpacked_custom_config)
 
   def test_make_output_split_names(self):
     split_names = utils.generate_output_split_names(

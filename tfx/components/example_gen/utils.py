@@ -19,9 +19,9 @@ from __future__ import print_function
 
 import six
 import tensorflow as tf
-from typing import Any, Dict, List, Text
+from typing import Any, Dict, List, Optional, Text
+from google.protobuf import any_pb2
 from tfx.proto import example_gen_pb2
-
 
 _DEFAULT_ENCODING = 'utf-8'
 
@@ -115,13 +115,18 @@ def generate_output_split_names(input_config: example_gen_pb2.Input,
   return result
 
 
-def make_default_input_config(split_pattern: Text = '*'
-                             ) -> example_gen_pb2.Input:
+def make_default_input_config(
+    split_pattern: Text = '*',
+    custom_config: Optional[any_pb2.Any] = None,
+) -> example_gen_pb2.Input:
   """Returns default input config."""
   # Treats input base dir as a single split.
-  return example_gen_pb2.Input(splits=[
+  input_config = example_gen_pb2.Input(splits=[
       example_gen_pb2.Input.Split(name='single_split', pattern=split_pattern)
   ])
+  if custom_config:
+    input_config.custom_config.CopyFrom(custom_config)
+  return input_config
 
 
 def make_default_output_config(input_config: example_gen_pb2.Input

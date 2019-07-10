@@ -1,0 +1,71 @@
+// Copyright 2019 Google LLC. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+syntax = "proto3";
+
+package third_party.tfx.components.example_gen.presto_example_gen;
+
+message ConnectionConfig{
+  PrestoConfig presto_config = 1; // required
+
+  message PrestoConfig {
+    // Based off official prestodb-python-client library
+    // https://github.com/prestodb/presto-python-client
+    string host = 1; // required
+    oneof opt_port { uint32 port = 2; }
+    oneof opt_user { string user = 3; }
+    oneof opt_source { string source = 4; }
+    oneof opt_catalog { string catalog = 5; }
+    oneof opt_schema { string schema = 6; }
+    // session_properties = 7
+    // http_headers = 8
+    oneof opt_http_scheme { string http_scheme = 9; }
+    oneof opt_auth { AuthConfig auth = 10; }
+    // redirect_handler = 11
+    oneof opt_max_attempts { uint32 max_attempts = 12; }
+    oneof opt_request_timeout { uint32 request_timeout = 13; }
+    oneof opt_isolation_level { IsolationLevel isolation_level = 14; }
+
+    enum IsolationLevel {
+      AUTOCOMMIT = 0;
+      READ_UNCOMMITTED = 1;
+      READ_COMMITTED = 2;
+      REPEATABLE_READ = 3;
+      SERIALIZABLE = 4;
+    }
+  }
+}
+
+message AuthConfig {
+  oneof auth_type { // required
+    BasicAuthConfig basic_auth = 1; // prestodb.auth.BasicAuthentication class
+    KerberosAuthConfig kerberos_auth = 2; // prestodb.auth.KerberosAuthentication class
+  }
+
+  message BasicAuthConfig {
+    string username = 1; // required
+    string password = 2; // required
+  }
+
+  message KerberosAuthConfig {
+    oneof opt_config { string config = 1; }
+    string service_name = 2; // required
+    bool mutual_authentication = 3; // required
+    bool force_preemptive = 4; // required
+    oneof opt_hostname_override { string hostname_override = 5; }
+    bool sanitize_mutual_error_response = 6; // required
+    oneof opt_principal { string principal = 7; }
+    bool delegate = 8; // required
+    oneof opt_ca_bundle { string ca_bundle = 9; }
+  }
+}

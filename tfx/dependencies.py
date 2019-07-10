@@ -24,6 +24,7 @@ def make_required_install_packages():
       'google-api-python-client>=1.7.8,<2',
       'ml-metadata>=0.13.2,<0.14',
       'protobuf>=3.7,<4',
+      'presto-python-client>=0.7.0',  # TODO(actam): check if needed
       'six>=1.10,<2',
       'tensorflow-data-validation>=0.13.1,<0.14',
       'tensorflow-model-analysis>=0.13.2,<0.14',
@@ -37,6 +38,7 @@ def make_required_test_packages():
       'apache-airflow>=1.10,<2',
       'kfp>=0.1.18,<0.2; python_version >= "3.0"',
       'pytest>=4.4.1,<5',
+      'presto-python-client>=0.7.0',
       'tensorflow>=1.13,<2',
       'tzlocal>=1.5,<2.0',
   ]

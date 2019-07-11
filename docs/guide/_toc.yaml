@@ -26,7 +26,7 @@ toc:
 - heading: "Orchestrators"
   style: divider
 - title: "Apache Airflow"
-  path: /tfx/guide/airflow
+  path: /tfx/guide/orchestra
 - title: "Kubeflow Pipelines"
   path: /tfx/guide/kubeflow
 

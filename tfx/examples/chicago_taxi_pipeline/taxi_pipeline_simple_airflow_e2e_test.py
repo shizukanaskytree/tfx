@@ -144,15 +144,15 @@ class AirflowEndToEndTest(unittest.TestCase):
     # but before current execution date.
     self._execution_date = '2019-02-01T01:01:01+01:01'
     self._all_tasks = [
-        'CsvExampleGen',
-        'Evaluator',
-        'ExampleValidator',
-        'ModelValidator',
-        'Pusher',
-        'SchemaGen',
-        'StatisticsGen',
-        'Trainer',
-        'Transform',
+        'CsvExampleGen.0',
+        'Evaluator.0',
+        'ExampleValidator.0',
+        'ModelValidator.0',
+        'Pusher.0',
+        'SchemaGen.0',
+        'StatisticsGen.0',
+        'Trainer.0',
+        'Transform.0',
     ]
     # Copy dag file and data.
     chicago_taxi_pipeline_dir = os.path.dirname(__file__)

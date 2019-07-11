@@ -55,7 +55,7 @@ def _make_fake_component_instance(name: Text,
     def __init__(self, name: Text, spec_kwargs: Dict[Text, Any]):
       spec = _FakeComponentSpec(
           output=channel.Channel(type_name=name), **spec_kwargs)
-      super(_FakeComponent, self).__init__(spec=spec, name=name)
+      super(_FakeComponent, self).__init__(spec=spec)
 
   spec_kwargs = dict(itertools.chain(inputs.items(), outputs.items()))
   return _FakeComponent(name, spec_kwargs)
@@ -80,8 +80,11 @@ class PipelineTest(tf.test.TestCase):
     component_a = _make_fake_component_instance('component_a', {}, {})
     component_b = _make_fake_component_instance(
         'component_b', {'a': component_a.outputs.output}, {})
-    component_c = _make_fake_component_instance(
-        'component_c', {'a': component_a.outputs.output}, {})
+    component_c = _make_fake_component_instance('component_c', {
+        'a': component_a.outputs.output,
+        'b': component_b.outputs.output
+    }, {})
+    component_c.name = 'my_special_component'
     component_d = _make_fake_component_instance('component_d', {
         'b': component_b.outputs.output,
         'c': component_c.outputs.output
@@ -105,6 +108,11 @@ class PipelineTest(tf.test.TestCase):
     self.assertItemsEqual(
         my_pipeline.components,
         [component_a, component_b, component_c, component_d, component_e])
+    self.assertEqual(component_a.name, '0')
+    self.assertEqual(component_b.name, '1')
+    self.assertEqual(component_c.name, 'my_special_component')
+    self.assertEqual(component_d.name, '3')
+    self.assertEqual(component_e.name, '4')
     self.assertItemsEqual(my_pipeline.components[0].downstream_nodes,
                           [component_b, component_c, component_e])
     self.assertEqual(my_pipeline.components[-1], component_e)

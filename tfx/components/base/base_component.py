@@ -403,6 +403,10 @@ class BaseComponent(with_metaclass(abc.ABCMeta, object)):
     return self.spec.component_name
 
   @property
+  def component_type(self) -> Text:
+    return '.'.join([self.__class__.__module__, self.__class__.__name__])
+
+  @property
   def inputs(self) -> _PropertyDictWrapper:
     return self.spec.inputs
 

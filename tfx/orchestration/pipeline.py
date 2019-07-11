@@ -18,6 +18,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import collections
 import functools
 import json
 import os
@@ -92,7 +93,7 @@ class Pipeline(object):
       enable_cache: whether or not cache is enabled for this run.
       **kwargs: additional kwargs forwarded as pipeline args.
         - beam_pipeline_args: Beam pipeline args for beam jobs within executor.
-            Executor will use beam DirectRunner as Default.
+          Executor will use beam DirectRunner as Default.
     """
     # TODO(ruoyu): Deprecate pipeline args once finish migration to
     # go/tfx-oss-artifact-passing
@@ -133,11 +134,6 @@ class Pipeline(object):
         assert not producer_map.get(
             output_channel), '{} produced more than once'.format(output_channel)
         producer_map[output_channel] = component
-        # Fill in detailed artifact properties.
-        for artifact in output_channel.get():
-          artifact.name = key
-          artifact.pipeline_name = self.pipeline_info.pipeline_name
-          artifact.producer_component = component.component_id
 
     # Connects nodes based on producer map.
     for component in deduped_components:
@@ -148,12 +144,20 @@ class Pipeline(object):
 
     self._components = []
     visited = set()
+    instances_per_component_type = collections.defaultdict(int)
     # Finds the nodes with indegree 0.
     current_layer = [c for c in deduped_components if not c.upstream_nodes]
     # Sorts component in topological order.
     while current_layer:
       next_layer = []
       for component in current_layer:
+        # If component unique name is not defined by user, assign one to make
+        # sure there is no duplicated component_id in the pipeline.
+        component.name = component.name or str(
+            instances_per_component_type[component.component_type])
+        instances_per_component_type[
+            component.component_type] = instances_per_component_type[
+                component.component_type] + 1
         self._components.append(component)
         visited.add(component)
         for downstream_node in component.downstream_nodes:
@@ -165,3 +169,11 @@ class Pipeline(object):
     # has all its dependencies visited.
     if len(self._components) < len(deduped_components):
       raise RuntimeError('There is a cycle in the pipeline')
+
+    for component in self._components:
+      for key, output_channel in component.outputs.get_all().items():
+        # Fill in detailed artifact properties.
+        for artifact in output_channel.get():
+          artifact.name = key
+          artifact.pipeline_name = self.pipeline_info.pipeline_name
+          artifact.producer_component = component.component_id

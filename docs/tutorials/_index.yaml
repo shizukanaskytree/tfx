@@ -1,5 +1,6 @@
 book_path: /tfx/_book.yaml
 project_path: /tfx/_project.yaml
+title: "TFX tutorials | TFX | TensorFlow"
 description: <!--no description-->
 landing_page:
   nav: left

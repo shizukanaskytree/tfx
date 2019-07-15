@@ -50,47 +50,60 @@ class TfxArtifact(object):
   internal state.
   """
 
-  def __init__(self, type_name: Text, split: Optional[Text] = ''):
+  def __init__(self,
+               type_name: Text,
+               split: Optional[Text] = '',
+               artifact: Optional[metadata_store_pb2.Artifact] = None):
     """Construct an instance of TfxArtifact.
 
-    Each instance of TfxArtifact wraps an Artifact and its type internally.
-    When first created, the artifact will have an empty URI (which will be
-    filled by the orchestration system before first usage).
+    There are two approaches to construct a TfxArtifact:
+      1. Used by TFX internal implementation: create an empty TfxArtifact with
+         type_name and optional split info specified. The remaining info will
+         be filled in during compiling and running time. The TfxArtifact here
+         should be transparent to end users.
+      2. Used by pipeline DSL users: create a TfxArtifact with type_name,
+         optional split and a valid metadata_store_pb2.Artifact that has been
+         registered in MLMD with valid URI and id (assigned by MLMD). This is
+         useful when trying to execute individual components.
 
     Args:
       type_name: Name of underlying ArtifactType.
       split: Which split this instance of articact maps to.
+      artifact: Optional MLMD Artifact that we want to convert to TfxArtifact.
     """
     artifact_type = metadata_store_pb2.ArtifactType()
     artifact_type.name = type_name
     artifact_type.properties['type_name'] = metadata_store_pb2.STRING
-    # This indicates the state of an artifact. A state can be any of the
-    # followings: PENDING, PUBLISHED, MISSING, DELETING, DELETED
-    # TODO(ruoyu): Maybe switch to artifact top-level state if it's supported.
-    artifact_type.properties['state'] = metadata_store_pb2.STRING
-    # Span number of an artifact. For the same artifact type produced by the
-    # same executor, this number should always increase.
-    artifact_type.properties['span'] = metadata_store_pb2.INT
-    # Comma separated splits recognized. Empty string means artifact has no
-    # split.
-    artifact_type.properties['split'] = metadata_store_pb2.STRING
-    # TODO(b/135056715): Rely on MLMD context for pipeline grouping for
-    # artifacts once it's ready.
-    # The name of the pipeline that produces the artifact.
-    artifact_type.properties['pipeline_name'] = metadata_store_pb2.STRING
-    # The name of the component that produces the artifact.
-    artifact_type.properties['producer_component'] = metadata_store_pb2.STRING
-    # The name of the artifact, used to differentiate same type of artifact
-    # produced by the same component.
-    artifact_type.properties['name'] = metadata_store_pb2.STRING
+    if artifact:
+      self.artifact = artifact
+    else:
+      # This indicates the state of an artifact. A state can be any of the
+      # followings: PENDING, PUBLISHED, MISSING, DELETING, DELETED
+      # TODO(ruoyu): Maybe switch to artifact top-level state if it's supported.
+      artifact_type.properties['state'] = metadata_store_pb2.STRING
+      # Span number of an artifact. For the same artifact type produced by the
+      # same executor, this number should always increase.
+      artifact_type.properties['span'] = metadata_store_pb2.INT
+      # Comma separated splits recognized. Empty string means artifact has no
+      # split.
+      artifact_type.properties['split'] = metadata_store_pb2.STRING
+      # TODO(b/135056715): Rely on MLMD context for pipeline grouping for
+      # artifacts once it's ready.
+      # The name of the pipeline that produces the artifact.
+      artifact_type.properties['pipeline_name'] = metadata_store_pb2.STRING
+      # The name of the component that produces the artifact.
+      artifact_type.properties['producer_component'] = metadata_store_pb2.STRING
+      # The name of the artifact, used to differentiate same type of artifact
+      # produced by the same component.
+      artifact_type.properties['name'] = metadata_store_pb2.STRING
 
-    self.artifact_type = artifact_type
+      self.artifact_type = artifact_type
 
-    artifact = metadata_store_pb2.Artifact()
-    artifact.properties['type_name'].string_value = type_name
-    artifact.properties['split'].string_value = split
+      artifact = metadata_store_pb2.Artifact()
+      artifact.properties['type_name'].string_value = type_name
+      artifact.properties['split'].string_value = split
 
-    self.artifact = artifact
+      self.artifact = artifact
 
   def __str__(self):
     return '{}:{}.{}'.format(self.artifact_type.name, self.uri, str(self.id))

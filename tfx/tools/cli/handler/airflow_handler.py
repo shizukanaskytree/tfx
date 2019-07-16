@@ -91,7 +91,16 @@ class AirflowHandler(base_handler.BaseHandler):
     # Delete pipeline folder.
     io_utils.delete_dir(handler_pipeline_path)
 
-  def run_pipeline(self) -> None:
+  def compile_pipeline(self) -> None:
+    """Compiles pipeline in Airflow."""
+    self._check_pipeline_dsl_path()
+    self._check_dsl_runner()
+    pipeline_args = self._extract_pipeline_args()
+    if not pipeline_args:
+      sys.exit('Unable to compile pipeline. Check your pipeline dsl.')
+    click.echo('Pipeline compiled successfully.')
+
+  def create_run(self) -> None:
     """Trigger DAG in Airflow."""
     # Check if pipeline exists.
     handler_pipeline_path = self._get_handler_pipeline_path(
@@ -102,8 +111,41 @@ class AirflowHandler(base_handler.BaseHandler):
     # Unpause and trigger DAG.
     subprocess.call(['airflow', 'unpause',
                      self.flags_dict[labels.PIPELINE_NAME]])
-    subprocess.call(['airflow', 'trigger_dag',
-                     self.flags_dict[labels.PIPELINE_NAME]])
+    subprocess.call(
+        ['airflow', 'trigger_dag', self.flags_dict[labels.PIPELINE_NAME]])
+
+  def delete_run(self) -> None:
+    """Deletes a run in Airflow."""
+    click.echo('Not supported for Airflow.')
+
+  def terminate_run(self) -> None:
+    """Stops a run in Airflow."""
+    click.echo('Not supported for Airflow.')
+
+  def list_runs(self) -> None:
+    """Lists all runs of a pipeline in Airflow."""
+    # Check if pipeline exists.
+    handler_pipeline_path = self._get_handler_pipeline_path(
+        self.flags_dict[labels.PIPELINE_NAME])
+    if not tf.io.gfile.exists(handler_pipeline_path):
+      sys.exit('Pipeline {} does not exist.'.format(
+          self.flags_dict[labels.PIPELINE_NAME]))
+    # Unpause and trigger DAG.
+    subprocess.call(
+        ['airflow', 'list_dag_runs', self.flags_dict[labels.PIPELINE_NAME]])
+
+  def get_run(self) -> None:
+    """Checks run status in Airflow."""
+    # Check if pipeline exists.
+    handler_pipeline_path = self._get_handler_pipeline_path(
+        self.flags_dict[labels.PIPELINE_NAME])
+    if not tf.io.gfile.exists(handler_pipeline_path):
+      sys.exit('Pipeline {} does not exist.'.format(
+          self.flags_dict[labels.PIPELINE_NAME]))
+    subprocess.call([
+        'airflow', 'dag_state', self.flags_dict[labels.PIPELINE_NAME],
+        self.flags_dict[labels.RUN_ID]
+    ])
 
   # TODO(b/132286477): Shift get_handler_home to base_handler later if needed.
   def _get_handler_home(self) -> Text:

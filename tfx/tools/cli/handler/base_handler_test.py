@@ -38,7 +38,22 @@ class FakeHandler(base_handler.BaseHandler):
   def delete_pipeline(self) -> None:
     pass
 
-  def run_pipeline(self) -> None:
+  def compile_pipeline(self) -> None:
+    pass
+
+  def create_run(self) -> None:
+    pass
+
+  def delete_run(self) -> None:
+    pass
+
+  def terminate_run(self) -> None:
+    pass
+
+  def list_runs(self) -> None:
+    pass
+
+  def get_run(self) -> None:
     pass
 
 

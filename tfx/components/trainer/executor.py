@@ -26,7 +26,6 @@ from tensorflow_metadata.proto.v0 import schema_pb2
 from tfx.components.base import base_executor
 from tfx.extensions.google_cloud_ai_platform import runner
 from tfx.proto import trainer_pb2
-from tfx.utils import import_utils
 from tfx.utils import io_utils
 from tfx.utils import path_utils
 from tfx.utils import types
@@ -76,9 +75,8 @@ class Executor(base_executor.BaseExecutor):
 
     Args:
       input_dict: Input dict from input key to a list of ML-Metadata Artifacts.
-        - examples: Examples used for training, must include 'train' and 'eval'
-          splits.
-        - transform_output: Optional input transform graph.
+        - transformed_examples: Transformed example.
+        - transform_output: Input transform graph.
         - schema: Schema of the data.
       output_dict: Output dict from output key to a list of Artifacts.
         - output: Exported model.
@@ -115,19 +113,18 @@ class Executor(base_executor.BaseExecutor):
                                           exec_properties, executor_class_path,
                                           cmle_args)
 
-    trainer_fn = import_utils.import_func_from_source(
-        exec_properties['module_file'], 'trainer_fn')
+    trainer_fn = io_utils.import_func(exec_properties['module_file'],
+                                      'trainer_fn')
 
     # Set up training parameters
     train_files = [
         _all_files_pattern(
-            types.get_split_uri(input_dict['examples'], 'train'))
+            types.get_split_uri(input_dict['transformed_examples'], 'train'))
     ]
-    transform_output = types.get_single_uri(
-        input_dict['transform_output']
-    ) if input_dict['transform_output'] else None
+    transform_output = types.get_single_uri(input_dict['transform_output'])
     eval_files = [
-        _all_files_pattern(types.get_split_uri(input_dict['examples'], 'eval'))
+        _all_files_pattern(
+            types.get_split_uri(input_dict['transformed_examples'], 'eval'))
     ]
     schema_file = io_utils.get_only_uri_in_dir(
         types.get_single_uri(input_dict['schema']))
@@ -162,8 +159,7 @@ class Executor(base_executor.BaseExecutor):
     hparams = tf.contrib.training.HParams(
         # A list of uris for train files.
         train_files=train_files,
-        # An optional single uri for transform graph produced by TFT. Will be
-        # None if not specified.
+        # A single uri for transform graph produced by TFT.
         transform_output=transform_output,
         # A single uri for the output directory of the serving model.
         serving_model_dir=serving_model_dir,

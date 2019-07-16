@@ -58,8 +58,33 @@ class BaseHandler(with_metaclass(abc.ABCMeta, object)):
     pass
 
   @abc.abstractmethod
-  def run_pipeline(self) -> None:
+  def compile_pipeline(self) -> None:
+    """Compiles pipeline for the handler."""
+    pass
+
+  @abc.abstractmethod
+  def create_run(self) -> None:
     """Runs a pipeline for the handler."""
+    pass
+
+  @abc.abstractmethod
+  def delete_run(self) -> None:
+    """Deletes a run."""
+    pass
+
+  @abc.abstractmethod
+  def terminate_run(self) -> None:
+    """Stops a run."""
+    pass
+
+  @abc.abstractmethod
+  def list_runs(self) -> None:
+    """Lists all runs of a pipeline."""
+    pass
+
+  @abc.abstractmethod
+  def get_run(self) -> None:
+    """Checks run status."""
     pass
 
   def _check_pipeline_dsl_path(self) -> None:
@@ -79,4 +104,3 @@ class BaseHandler(with_metaclass(abc.ABCMeta, object)):
       match = re.search(regexes[engine_flag], dsl_contents)
       if not match:
         sys.exit('{} runner not found in dsl.'.format(engine_flag))
-

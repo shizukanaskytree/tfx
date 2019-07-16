@@ -212,8 +212,6 @@ class ComponentSpec(with_metaclass(abc.ABCMeta, object)):
         value = json_format.MessageToJson(value, sort_keys=True)
       self.exec_properties[arg_name] = value
     for arg_name, arg in self.INPUTS.items():
-      if arg.optional and not self._raw_args.get(arg_name):
-        continue
       value = self._raw_args[arg_name]
       inputs[arg_name] = value
     for arg_name, arg in self.OUTPUTS.items():
@@ -282,9 +280,10 @@ class ChannelParameter(_ComponentParameter):
     # ...
   """
 
-  def __init__(self, type_name: Text = None, optional: Optional[bool] = False):
+  def __init__(self, type_name: Text = None):
     self.type_name = type_name
-    self.optional = optional
+    # Right now, channel parameters are never optional.
+    self.optional = False
 
   def __repr__(self):
     return 'ChannelParameter(type_name: %s)' % (self.type_name,)

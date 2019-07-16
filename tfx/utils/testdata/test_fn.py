@@ -20,8 +20,3 @@ from __future__ import print_function
 def test_fn(inputs):
   """test function to sum all inputs."""
   return sum(inputs)
-
-
-class TestClass(object):
-  """a class to test import_utils."""
-  pass

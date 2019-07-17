@@ -36,7 +36,8 @@ class TrainerSpec(base_component.ComponentSpec):
   PARAMETERS = {
       'train_args': ExecutionParameter(type=trainer_pb2.TrainArgs),
       'eval_args': ExecutionParameter(type=trainer_pb2.EvalArgs),
-      'module_file': ExecutionParameter(type=(str, Text)),
+      'module_file': ExecutionParameter(type=(str, Text), optional=True),
+      'train_fn': ExecutionParameter(type=(str, Text), optional=True),
       'custom_config': ExecutionParameter(type=Dict[Text, Any], optional=True),
   }
   INPUTS = {
@@ -75,7 +76,8 @@ class Trainer(base_component.BaseComponent):
       transformed_examples: channel.Channel = None,
       transform_output: Optional[channel.Channel] = None,
       schema: channel.Channel = None,
-      module_file: Text = None,
+      module_file: Optional[Text] = None,
+      train_fn: Optional[Text] = None,
       train_args: trainer_pb2.TrainArgs = None,
       eval_args: trainer_pb2.EvalArgs = None,
       custom_config: Optional[Dict[Text, Any]] = None,
@@ -86,13 +88,16 @@ class Trainer(base_component.BaseComponent):
 
     Args:
       examples: A Channel of 'ExamplesPath' type, serving as the source of
-        examples that are used in training.
+        examples that are used in training. May be raw or transformed.
       transformed_examples: Deprecated field. Please set 'examples' instead.
       transform_output: An optional Channel of 'TransformPath' type, serving as
         the input transform graph if present.
       schema:  A Channel of 'SchemaPath' type, serving as the schema of training
         and eval data.
-      module_file: A python module file containing UDF model definition.
+      module_file: A path to python module file containing UDF model definition.
+        Exactly one of 'module_file' or 'train_fn' must be supplied.
+      train_fn:  A python path to UDF model definition function. Exactly one of
+        'module_file' or 'train_fn' must be supplied.
       train_args: A trainer_pb2.TrainArgs instance, containing args used for
         training. Current only num_steps is available.
       eval_args: A trainer_pb2.EvalArgs instance, containing args used for eval.
@@ -105,20 +110,33 @@ class Trainer(base_component.BaseComponent):
       output: Optional 'ModelExportPath' channel for result of exported models.
       name: Optional unique name. Necessary iff multiple Trainer components are
         declared in the same pipeline.
+
+    Raises:
+      ValueError:
+        - When both or neither of 'module_file' and 'train_fn' is supplied.
+        - When both or neither of 'examples' and 'transformed_examples'
+            is supplied.
+        - When 'transformed_examples' is supplied but 'transform_output'
+            is not supplied.
     """
-    output = output or channel.Channel(
-        type_name='ModelExportPath',
-        artifacts=[types.TfxArtifact('ModelExportPath')])
-    assert bool(examples) ^ bool(
-        transformed_examples
-    ), 'Exactly one of example or transformed_example should be set.'
-    if transformed_examples:
-      assert bool(
-          transform_output
-      ), 'If transformed_examples is set, transform_output should be set too.'
+    if bool(module_file) == bool(train_fn):
+      raise ValueError(
+          "Exactly one of 'module_file' or 'train_fn' must be supplied")
+
+    if bool(examples) == bool(transformed_examples):
+      raise ValueError(
+          "Exactly one of 'example' or 'transformed_example' must be supplied.")
+
+    if transformed_examples and not transform_output:
+      raise ValueError("If 'transformed_examples' is supplied, "
+                       "'transform_output' must be supplied too.")
+
     examples = examples or transformed_examples
     transform_output_channel = channel.as_channel(
         transform_output) if transform_output else None
+    output = output or channel.Channel(
+        type_name='ModelExportPath',
+        artifacts=[types.TfxArtifact('ModelExportPath')])
     spec = TrainerSpec(
         examples=channel.as_channel(examples),
         transform_output=transform_output_channel,
@@ -126,6 +144,7 @@ class Trainer(base_component.BaseComponent):
         train_args=train_args,
         eval_args=eval_args,
         module_file=module_file,
+        train_fn=train_fn,
         custom_config=custom_config,
         output=output)
     super(Trainer, self).__init__(
